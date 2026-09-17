@@ -1,28 +1,34 @@
 pipeline {
     agent any
 
-    environment {
-        PATH = "/Users/varunpatil/fvm/default/bin:$PATH" // Flutter environment path
-    }
-
     stages {
-        stage('Checkout Code') {
+        stage('Environment Debug') {
             steps {
-                echo '1. Getting latest code from GitHub...'
-                checkout scm
+                sh 'echo FLUTTER_HOME=$FLUTTER_HOME'
+                sh 'echo PATH=$PATH'
+                sh 'whoami'
+                sh 'ls -l ${FLUTTER_HOME}/bin/'
+                sh 'which flutter'
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-token-id',
+                    url: 'https://github.com/varunbpatil1121-max/expense_app.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo '2. Fetching Flutter packages...'
+                sh 'git config --global --add safe.directory /home/ubuntu/flutter'
                 sh 'flutter pub get'
             }
         }
 
         stage('Build APK') {
             steps {
-                echo '3. Building Android APK...'
                 sh 'flutter build apk --release'
             }
         }
@@ -30,11 +36,7 @@ pipeline {
 
     post {
         success {
-            echo '🎉 Expense App built successfully!'
             archiveArtifacts artifacts: 'build/app/outputs/flutter-apk/app-release.apk', allowEmptyArchive: false
-        }
-        failure {
-            echo '❌ Build failed!'
         }
     }
 }
