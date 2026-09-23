@@ -62,7 +62,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   final List<Expense> _registeredExpenses = [
     Expense(
       title: 'Flutter Course',
-      amount:2.19 
+      amount: 2.19,
       date: DateTime.now(),
       category: Category.work,
     ),
