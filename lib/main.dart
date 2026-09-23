@@ -68,7 +68,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     ),
     Expense(
       title: 'Cinema',
-      amount:7.18,
+      amount:6.18,
       date: DateTime.now(),
       category: Category.leisure,
     ),
