@@ -1,34 +1,36 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Environment Debug') {
-            steps {
-                sh 'echo FLUTTER_HOME=$FLUTTER_HOME'
-                sh 'echo PATH=$PATH'
-                sh 'whoami'
-                sh 'ls -l ${FLUTTER_HOME}/bin/'
-                sh 'which flutter'
-            }
-        }
+    environment {
+        FLUTTER_HOME = '/opt/flutter'
+        ANDROID_HOME = '/opt/android-sdk'
+        PATH = "/opt/flutter/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        HOME = '/var/lib/jenkins'
+        CI = 'true'
+        BOT = 'true'
+        PUB_ENVIRONMENT = 'bot.jenkins'
+        FLUTTER_SUPPRESS_ANALYTICS = 'true'
+    }
 
-        stage('Checkout') {
+    stages {
+        stage('Checkout Repository') {
             steps {
+                cleanWs()
                 git branch: 'main',
-                    credentialsId: 'github-token-id',
                     url: 'https://github.com/varunbpatil1121-max/expense_app.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Get Dependencies') {
             steps {
-                sh 'git config --global --add safe.directory /home/ubuntu/flutter'
+                echo 'Fetching pub packages...'
                 sh 'flutter pub get'
             }
         }
 
         stage('Build APK') {
             steps {
+                echo 'Building release APK...'
                 sh 'flutter build apk --release'
             }
         }
@@ -37,6 +39,9 @@ pipeline {
     post {
         success {
             archiveArtifacts artifacts: 'build/app/outputs/flutter-apk/app-release.apk', allowEmptyArchive: false
+        }
+        failure {
+            echo 'Pipeline failed. Check console output for details.'
         }
     }
 }
