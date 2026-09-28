@@ -28,13 +28,6 @@ pipeline {
             }
         }
 
-        stage('Build APK') {
-            steps {
-                echo 'Building release APK...'
-                sh 'flutter build apk --release'
-            }
-        }
-
         stage('Build AAB') {
             steps {
                 echo 'Building release AAB...'
@@ -45,7 +38,7 @@ pipeline {
 
     post {
         success {
-            archiveArtifacts artifacts: 'build/app/outputs/flutter-apk/app-release.apk,build/app/outputs/bundle/release/app-release.aab', allowEmptyArchive: false
+            archiveArtifacts artifacts: 'build/app/outputs/bundle/release/app-release.aab', allowEmptyArchive: false
         }
         failure {
             echo 'Pipeline failed. Check console output for details.'
