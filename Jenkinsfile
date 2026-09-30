@@ -29,9 +29,9 @@ pipeline {
             }
         }
 
-        stage('Build AAB') {
+        stage('Build AAB and APK') {
             steps {
-                echo 'Building release AAB...'
+                echo 'Building release AAB and APK...'
                 withCredentials([
                     file(credentialsId: 'expense-app-keystore', variable: 'KEYSTORE_FILE'),
                     string(credentialsId: 'expense-app-store-password', variable: 'STORE_PASSWORD'),
@@ -46,6 +46,7 @@ keyAlias=expense_app_upload
 storeFile=$KEYSTORE_FILE
 EOF
                         flutter build appbundle --release
+                        flutter build apk --release
                         rm -f android/key.properties
                     '''
                 }
@@ -55,7 +56,7 @@ EOF
 
     post {
         success {
-            archiveArtifacts artifacts: 'build/app/outputs/bundle/release/app-release.aab', allowEmptyArchive: false
+            archiveArtifacts artifacts: 'build/app/outputs/bundle/release/app-release.aab, build/app/outputs/flutter-apk/app-release.apk', allowEmptyArchive: false
         }
         failure {
             echo 'Pipeline failed. Check console output for details.'
