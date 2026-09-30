@@ -2,10 +2,11 @@ pipeline {
     agent any
 
     environment {
-        FLUTTER_HOME = '/opt/flutter'
-        ANDROID_HOME = '/opt/android-sdk'
-        PATH = "/opt/flutter/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        HOME = '/var/lib/jenkins'
+        // Paths for the Jenkins agent running on the Mac
+        FLUTTER_HOME = '/Users/varunpatil/develop/flutter'
+        ANDROID_HOME = '/Users/varunpatil/Library/Android/sdk'
+        JAVA_HOME = '/Applications/Android Studio.app/Contents/jbr/Contents/Home'
+        PATH = "/Users/varunpatil/develop/flutter/bin:/Users/varunpatil/Library/Android/sdk/cmdline-tools/latest/bin:/Users/varunpatil/Library/Android/sdk/platform-tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         CI = 'true'
         BOT = 'true'
         PUB_ENVIRONMENT = 'bot.jenkins'
