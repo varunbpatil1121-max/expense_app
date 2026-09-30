@@ -31,7 +31,23 @@ pipeline {
         stage('Build AAB') {
             steps {
                 echo 'Building release AAB...'
-                sh 'flutter build appbundle --release'
+                withCredentials([
+                    file(credentialsId: 'expense-app-keystore', variable: 'KEYSTORE_FILE'),
+                    string(credentialsId: 'expense-app-store-password', variable: 'STORE_PASSWORD'),
+                    string(credentialsId: 'expense-app-key-password', variable: 'KEY_PASSWORD')
+                ]) {
+                    // Write key.properties for release signing (it is gitignored)
+                    sh '''
+                        cat > android/key.properties <<EOF
+storePassword=$STORE_PASSWORD
+keyPassword=$KEY_PASSWORD
+keyAlias=expense_app_upload
+storeFile=$KEYSTORE_FILE
+EOF
+                        flutter build appbundle --release
+                        rm -f android/key.properties
+                    '''
+                }
             }
         }
     }

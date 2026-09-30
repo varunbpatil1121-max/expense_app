@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'expense.dart';
 import 'expense_item.dart';
+import 'expense_storage.dart';
 import 'new_expense.dart';
 
 final ColorScheme kColorScheme = ColorScheme.fromSeed(
@@ -14,7 +15,8 @@ final ColorScheme kDarkColorScheme = ColorScheme.fromSeed(
   seedColor: const Color.fromARGB(255, 5, 99, 125),
 );
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MaterialApp(
       darkTheme: ThemeData.dark().copyWith(
@@ -59,20 +61,33 @@ class ExpensesScreen extends StatefulWidget {
 }
 
 class _ExpensesScreenState extends State<ExpensesScreen> {
-  final List<Expense> _registeredExpenses = [
-    Expense(
-      title: 'Flutter Course',
-      amount: 6.16,
-      date: DateTime.now(),
-      category: Category.work,
-    ),
-    Expense(
-      title: 'Cinema',
-      amount: 4.56,
-      date: DateTime.now(),
-      category: Category.leisure,
-    ),
-  ];
+  final ExpenseStorage _storage = ExpenseStorage();
+  List<Expense> _registeredExpenses = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExpenses();
+  }
+
+  // Loads saved expenses from the device
+  Future<void> _loadExpenses() async {
+    final expenses = await _storage.load();
+    setState(() {
+      _registeredExpenses = expenses;
+      _isLoading = false;
+    });
+  }
+
+  // Updates the list, sorts newest first, and saves it to the device
+  void _updateExpenses(void Function(List<Expense>) change) {
+    setState(() {
+      change(_registeredExpenses);
+      _registeredExpenses.sort((a, b) => b.date.compareTo(a.date));
+    });
+    _storage.save(_registeredExpenses);
+  }
 
   // Function to open the bottom sheet modal for adding a new expense
   void _openAddExpenseOverlay() {
@@ -85,18 +100,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
-  // Function that adds the new expense to the list and updates UI
+  // Function that adds the new expense and saves it to the device
   void _addExpense(Expense expense) {
-    setState(() {
-      _registeredExpenses.add(expense);
-    });
+    _updateExpenses((list) => list.add(expense));
   }
 
   void _removeExpense(Expense expense) {
-    final expenseIndex = _registeredExpenses.indexOf(expense);
-    setState(() {
-      _registeredExpenses.remove(expense);
-    });
+    _updateExpenses((list) => list.remove(expense));
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -106,9 +116,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            setState(() {
-              _registeredExpenses.insert(expenseIndex, expense);
-            });
+            _updateExpenses((list) => list.add(expense));
           },
         ),
       ),
@@ -117,27 +125,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Widget mainContent = const Center(
-      child: Text('No expenses found. Start adding some!'),
-    );
-
-    if (_registeredExpenses.isNotEmpty) {
-      mainContent = ListView.builder(
-        itemCount: _registeredExpenses.length,
-        itemBuilder: (ctx, index) => Dismissible(
-          key: ValueKey(_registeredExpenses[index]),
-          background: Container(
-            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.75),
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-          ),
-          onDismissed: (direction) {
-            _removeExpense(_registeredExpenses[index]);
-          },
-          child: ExpenseItem(_registeredExpenses[index]),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flutter ExpenseTracker'),
@@ -192,7 +179,29 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ),
           ),
           Expanded(
-            child: mainContent,
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _registeredExpenses.isEmpty
+                    ? const Center(
+                        child: Text('No expenses found. Start adding some!'),
+                      )
+                    : ListView.builder(
+                        itemCount: _registeredExpenses.length,
+                        itemBuilder: (ctx, index) => Dismissible(
+                          key: ValueKey(_registeredExpenses[index].id),
+                          background: Container(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .error
+                                .withValues(alpha: 0.75),
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          onDismissed: (direction) {
+                            _removeExpense(_registeredExpenses[index]);
+                          },
+                          child: ExpenseItem(_registeredExpenses[index]),
+                        ),
+                      ),
           ),
         ],
       ),
